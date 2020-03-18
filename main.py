@@ -127,7 +127,24 @@ def clean(*args):
 
 
 def get_help(args):
-    print("-h\t: You can use this param to get help info")
+    print("\n\n")
+    print("    todo [-h | -add | -clean | -delete | -done | -modify | -undo] <the id | content>")
+    print('\t-add\t: You can use this param to write a new mission.\n\t\t  for a example: '
+          'todo -add "the example"')
+    print("\t-clean\t: you can use this param to clear the today's list.\n\t\t  for a example: "
+          "todo -clean")
+    print("\t-delete\t: You can use this param to delete a mission.\n\t\t  for a example: "
+          "todo -delete <the id of the mission \n\t\t  which you want to delete>")
+    print("\t-done\t: You can use this param to finish a mission.\n\t\t  for a example: "
+          "todo -done <the id of the mission \n\t\t  which you want to finish>")
+    print("\t-modify\t: You can use this param to modify the content of one mission.\n\t\t  for "
+          "a example: todo -modify <the id of the mission which \n\t\t  you want to modify> <the "
+          "content of this mission after modified>")
+    print("\t-undo\t: You can use this param to chanag the status from finished to unfinish."
+          "\n\t\t  for a example: todo -undo <the id of the mission which you want to \n\t\t  "
+          "change the status back to unfinish>")
+    print("\t-h\t: You can use this param to get help info\n\t\t  for a example: todo -h")
+    print("\n\n")
 
 
 def main_function(key, **kwargs):
