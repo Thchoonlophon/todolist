@@ -126,25 +126,30 @@ def clean(*args):
     todo_list(args)
 
 
+def get_help(args):
+    print("-h\t: You can use this param to get help info")
+
+
 def main_function(key, **kwargs):
     function = {
         "todo": todo_list,
-        "add": add,
-        "done": done,
-        "undo": undo,
-        "delete": delete,
-        "modify": modify,
-        "clean": clean
+        "-add": add,
+        "-done": done,
+        "-undo": undo,
+        "-delete": delete,
+        "-modify": modify,
+        "-clean": clean,
+        "-h": get_help
     }
     function[key](kwargs)
 
 
 if __name__ == '__main__':
-    params = sys.argv[1:]
-    operate = params[0].split("\\")[-1].replace(".bat", "")
+    params = sys.argv[2:]
+    operate = params[0] if len(params) > 0 else "todo"
     dbo = get_db()
     date = time.strftime("%Y-%m-%d")
-    the_id = params[1] if operate != "add" and len(params) >= 2 else ""
-    content = params[1] if operate == "add" and len(params) >= 2 else params[2] if operate == "modify" else ""
+    the_id = params[1] if operate not in ("-add", "-h") and len(params) >= 2 else ""
+    content = params[1] if operate == "-add" and len(params) >= 2 else params[2] if operate == "-modify" else ""
     main_function(operate, dbo=dbo, date=date, the_id=the_id, content=content)
     dbo.close()
