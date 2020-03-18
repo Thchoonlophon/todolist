@@ -59,18 +59,18 @@ def todo_list(*args):
     content_list = df["content"].tolist() if not df.empty else []
     content_len = [len(i) for i in content_list]
     max_len = max(content_len) if len(content_len) > 0 else 8
-    head = """\t\t\t────────────────────""" + "─" * max_len + "\n" + \
-           """\t\t\t status   id    """ + " " * ((max_len - 5) // 2) + "event" + " " * (
+    head = """\t    ────────────────────""" + "─" * max_len + "\n" + \
+           """\t     status   id    """ + " " * ((max_len - 5) // 2) + "event" + " " * (
                    max_len - ((max_len - 5) // 2 + 5)) + "\n" + \
-           """\t\t\t────────────────────""" + "─" * max_len + "\n"""
+           """\t    ────────────────────""" + "─" * max_len + "\n"""
     content = [
-        f"""\t\t\t    {get_status(i["status"])}     {i["id"]}    """ + " " * ((max_len - len(i["content"])) // 2) + i[
+        f"""\t        {get_status(i["status"])}     {i["id"]}    """ + " " * ((max_len - len(i["content"])) // 2) + i[
             "content"] + "  \n" for i in data]
     footer = head.split("\n")[-2]
     strings = "Nothing To Do!"
-    content_str = "".join(content) if content != [] else (("\t\t\t" + " " * ((footer.count("─") - 14) // 2)
+    content_str = "".join(content) if content != [] else (("\t    " + " " * ((footer.count("─") - 14) // 2)
                                                            ) + strings + "\n")
-    title = "\n\n\t\t\t" + " " * ((footer.count("─") - 9) // 2) + "TODO List\n"
+    title = "\n\n\t    " + " " * ((footer.count("─") - 9) // 2) + "TODO List\n"
     print(title)
     print(head + content_str + footer + "\n\n")
 
