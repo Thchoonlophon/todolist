@@ -2,4 +2,4 @@
 
 ## How&nbsp;&nbsp;To&nbsp;&nbsp;Run
 
-First of all, open your terminal and `git clone https://github.com/Thchoonlophon/todolist.git`. After this, you need add the path of this project to the environment variable, then you can use `todo`, `done`, `undo`, `add`, `delete`, `modify` and `clean`.
+First of all, open your terminal and `git clone https://github.com/Thchoonlophon/todolist.git`. After this, you need add the path of this project to the environment variable, then you can use `todo -h` to get help info.
