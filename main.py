@@ -10,6 +10,7 @@ port = os.getenv("MYSQL_PORT")
 db_name = os.getenv("MYSQL_DB")
 user = os.getenv("MYSQL_USER")
 pwd = os.getenv("MYSQL_PWD")
+table = os.getenv("TODO_TABLE")
 
 
 def get_db():
@@ -24,10 +25,10 @@ def get_status(x):
 
 
 def history(dbo, date):
-    sql = f"""select content from todo_list where status=0 and imp_date<'{date}' order by imp_time"""
+    sql = f"""select content from {table} where status=0 and imp_date<'{date}' order by imp_time"""
     rows = dbo.query(sql)
     df = rows.export("df")
-    sql = f"""select max(id) maid from todo_list where imp_date='{date}'"""
+    sql = f"""select max(id) maid from {table} where imp_date='{date}'"""
     rows = dbo.query(sql)
     li = rows.all()[0]["maid"]
     max_id = int(li) if li else -1
@@ -39,19 +40,19 @@ def history(dbo, date):
     df.drop("rows", axis=1, inplace=True)
     data = np.array(df).tolist()
     for i in data:
-        sql = f"""insert into todo_list(content,id,imp_date,imp_time) values('{i[0]}','{i[1]}','{i[2]}','{i[-1]}')"""
+        sql = f"""insert into {table}(content,id,imp_date,imp_time) values('{i[0]}','{i[1]}','{i[2]}','{i[-1]}')"""
         dbo.query(sql)
-    sql = f"""delete from todo_list where status=0 and imp_date<'{date}'"""
+    sql = f"""delete from {table} where status=0 and imp_date<'{date}'"""
     dbo.query(sql)
 
 
 def todo_list(*args):
     args = args[0]
-    sql = f"""select count(*) cont from todo_list where status=0 and imp_date<'{args["date"]}'"""
+    sql = f"""select count(*) cont from {table} where status=0 and imp_date<'{args["date"]}'"""
     rows = args["dbo"].query(sql)
     cont = rows.all()[0]["cont"]
     _ = history(args["dbo"], args["date"]) if cont > 0 else None
-    sql = f"""select id,content,status from todo_list where imp_date='{args["date"]}' order by id"""
+    sql = f"""select id,content,status from {table} where imp_date='{args["date"]}' order by id"""
     rows = args["dbo"].query(sql)
     df = rows.export("df")
     data = df.to_dict("records")
@@ -76,25 +77,25 @@ def todo_list(*args):
 
 def done(*args):
     args = args[0]
-    sql = f"""update todo_list set status=1 where id='{args["the_id"]}' and imp_date='{args["date"]}'"""
+    sql = f"""update {table} set status=1 where id='{args["the_id"]}' and imp_date='{args["date"]}'"""
     args["dbo"].query(sql)
     todo_list(args)
 
 
 def undo(*args):
     args = args[0]
-    sql = f"""update todo_list set status=0 where id='{args["the_id"]}' and imp_date='{args["date"]}'"""
+    sql = f"""update {table} set status=0 where id='{args["the_id"]}' and imp_date='{args["date"]}'"""
     args["dbo"].query(sql)
     todo_list(args)
 
 
 def add(*args):
     args = args[0]
-    sql = f"""select max(id) maid from todo_list where imp_date='{args["date"]}'"""
+    sql = f"""select max(id) maid from {table} where imp_date='{args["date"]}'"""
     rows = args["dbo"].query(sql)
     get_id = rows.all()[0]["maid"]
     maid = int(get_id) if get_id else -1
-    sql = f"""insert into todo_list(id,content,imp_date,imp_time) values('{"0" + str(maid + 1) if
+    sql = f"""insert into {table}(id,content,imp_date,imp_time) values('{"0" + str(maid + 1) if
     len(str(maid + 1)) < 2 else str(maid + 1)}','{args["content"]}','{args["date"]}',
     '{time.strftime("%Y-%m-%d %H:%M:%S")}')"""
     args["dbo"].query(sql)
@@ -103,9 +104,9 @@ def add(*args):
 
 def delete(*args):
     args = args[0]
-    sql = f"""delete from todo_list where id='{args["the_id"]}' and imp_date='{args["date"]}'"""
+    sql = f"""delete from {table} where id='{args["the_id"]}' and imp_date='{args["date"]}'"""
     args["dbo"].query(sql)
-    sql = f"""update todo_list set id=(case when id-1<10 then concat('0',id-1) else 'new' end) where 
+    sql = f"""update {table} set id=(case when id-1<10 then concat('0',id-1) else 'new' end) where 
     id>{int(args["the_id"])} and imp_date='{args["date"]}'"""
     args["dbo"].query(sql)
     todo_list(args)
@@ -113,7 +114,7 @@ def delete(*args):
 
 def modify(*args):
     args = args[0]
-    sql = f"""update todo_list set content='{args["content"]}' where id='{args["the_id"]}' 
+    sql = f"""update {table} set content='{args["content"]}' where id='{args["the_id"]}' 
     and imp_date='{args["date"]}'"""
     args["dbo"].query(sql)
     todo_list(args)
@@ -121,7 +122,7 @@ def modify(*args):
 
 def clean(*args):
     args = args[0]
-    sql = f"""delete from todo_list where imp_date='{args["date"]}'"""
+    sql = f"""delete from {table} where imp_date='{args["date"]}'"""
     args["dbo"].query(sql)
     todo_list(args)
 
