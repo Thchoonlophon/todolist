@@ -72,7 +72,7 @@ def todo_list(*args):
                                                            ) + strings + "\n")
     title = "\n\n\t    " + " " * ((footer.count("─") - 9) // 2) + "TODO List\n"
     print(title)
-    print(head + content_str + footer + "\n\n")
+    print(head + content_str + footer + "\n")
 
 
 def done(*args):
@@ -145,7 +145,6 @@ def get_help(args):
           "\n\t\t  for a example: todo -undo <the id of the mission which you want to \n\t\t  "
           "change the status back to unfinish>")
     print("\t-h\t: You can use this param to get help info\n\t\t  for a example: todo -h")
-    print("\n\n")
 
 
 def main_function(key, **kwargs):
