@@ -1,4 +1,5 @@
 .idea
+script_db.sqlite
 *.sqlite
 *.db
 test*.*
