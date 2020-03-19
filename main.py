@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import sys
 import time
 
@@ -11,11 +12,14 @@ port = os.getenv("MYSQL_PORT")
 db_name = os.getenv("MYSQL_DB")
 user = os.getenv("MYSQL_USER")
 pwd = os.getenv("MYSQL_PWD")
-table = os.getenv("TODO_TABLE")
+table = os.getenv("TODO_TABLE") if host else "todo_list"
+path = os.path.abspath(__file__)
+db_url = (("/".join(path.split("/")[:-1]) + "/") if "/" in path else (
+        "\\".join(path.split("\\")[:-1]) + "\\")) + "script_db.sqlite"
 
 
 def get_db():
-    db = pymysql.connect(host, user, pwd, db_name)
+    db = pymysql.connect(host, user, pwd, db_name) if host else sqlite3.connect(db_url)
     return db
 
 
