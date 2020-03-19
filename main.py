@@ -7,7 +7,8 @@ import pymysql
 import pandas as pd
 import numpy as np
 
-host = os.getenv("MYSQL_HOST")
+host = None
+# host = os.getenv("MYSQL_HOST")
 port = os.getenv("MYSQL_PORT")
 db_name = os.getenv("MYSQL_DB")
 user = os.getenv("MYSQL_USER")
@@ -40,8 +41,8 @@ class MyCursor:
         table = pd.DataFrame([[j for j in i] for i in rows], columns=cols)
         return table if not index else table.set_index(index)
 
-    def execute_sql(self, sql, **kwargs):
-        self._cur.execute(sql, kwargs)
+    def execute_sql(self, sql, params=None, **kwargs):
+        self._cur.execute(sql, kwargs) if not params else self._cur.executemany(sql, params)
         self._conn.commit()
 
     def close(self):
@@ -67,11 +68,13 @@ def history(dbo, date):
     df["imp_time"] = [time.strftime("%Y-%m-%d %H:%M:%S") for _ in range(len(df))]
     df.drop("rows", axis=1, inplace=True)
     data = np.array(df).tolist()
-    for i in data:
-        sql = f"""insert into {table}(content,id,imp_date,imp_time) values('{i[0]}','{i[1]}','{i[2]}','{i[-1]}')"""
-        dbo.query(sql)
+    sql = f"""insert into {table}(content,id,imp_date,imp_time) values(:1,:2,:3,:4)"""
+    dbo.execute_sql(sql, params=data)
+    # for i in data:
+    #     sql = f"""insert into {table}(content,id,imp_date,imp_time) values('{i[0]}','{i[1]}','{i[2]}','{i[-1]}')"""
+    #     dbo.query(sql)
     sql = f"""delete from {table} where status=0 and imp_date<'{date}'"""
-    dbo.query(sql)
+    dbo.execute_sql(sql)
 
 
 def todo_list(*args):
@@ -133,8 +136,10 @@ def delete(*args):
     args = args[0]
     sql = f"""delete from {table} where id='{args["the_id"]}' and imp_date='{args["date"]}'"""
     args["dbo"].execute_sql(sql)
-    sql = f"""update {table} set id=(case when id-1<10 then concat('0',id-1) else 'new' end) where 
-    id>{int(args["the_id"])} and imp_date='{args["date"]}'"""
+    sql = f"""update {table} set id=(case when id-1<10 then concat('0',id-1) else id-1 end) where 
+    id>{int(args["the_id"])} and imp_date='{args["date"]}'""" if host else f"""update {table} set id=(
+    case when id-1<10 then '0'||(id-1) else id-1 end) where id>'{args["the_id"]}' and 
+    imp_date='{args["date"]}'"""
     args["dbo"].execute_sql(sql)
     todo_list(args)
 
