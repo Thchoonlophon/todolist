@@ -129,7 +129,7 @@ def clean(*args):
 
 def get_help(args):
     print("\n\n")
-    print("    todo [-h | -add | -clean | -delete | -done | -modify | -undo] <the id | content>")
+    print("    todo [-h] | [-add | -clean | -delete | -done | -modify | -undo] <the id | content>")
     print('\t-add\t: You can use this param to write a new mission.\n\t\t  for a example: '
           'todo -add "the example"')
     print("\t-clean\t: you can use this param to clear the today's list.\n\t\t  for a example: "
