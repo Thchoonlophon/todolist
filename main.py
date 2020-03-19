@@ -7,8 +7,7 @@ import pymysql
 import pandas as pd
 import numpy as np
 
-host = None
-# host = os.getenv("MYSQL_HOST")
+host = os.getenv("MYSQL_HOST")
 port = os.getenv("MYSQL_PORT")
 db_name = os.getenv("MYSQL_DB")
 user = os.getenv("MYSQL_USER")
