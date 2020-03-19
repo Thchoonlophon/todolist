@@ -69,9 +69,6 @@ def history(dbo, date):
     data = np.array(df).tolist()
     sql = f"""insert into {table}(content,id,imp_date,imp_time) values(:1,:2,:3,:4)"""
     dbo.execute_sql(sql, params=data)
-    # for i in data:
-    #     sql = f"""insert into {table}(content,id,imp_date,imp_time) values('{i[0]}','{i[1]}','{i[2]}','{i[-1]}')"""
-    #     dbo.query(sql)
     sql = f"""delete from {table} where status=0 and imp_date<'{date}'"""
     dbo.execute_sql(sql)
 
