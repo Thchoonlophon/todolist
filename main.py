@@ -24,11 +24,6 @@ class MyCursor:
         self._conn = connection
         self._cur = self._conn.cursor()
 
-    def get_all(self, sql, **kwargs):
-        self._cur.execute(sql, kwargs)
-        data = self._cur.fetchall()
-        return data
-
     def get_one(self, sql, **kwargs):
         self._cur.execute(sql, kwargs)
         data = self._cur.fetchone()
@@ -39,23 +34,11 @@ class MyCursor:
         cols = [i[0] for i in self._cur.description]
         rows = self._cur.fetchall()
         table = pd.DataFrame([[j for j in i] for i in rows], columns=cols)
-        if index is None:
-            return table
-        else:
-            return table.set_index(index)
-
-    def insert_data(self, sql, params=[]):
-        self._cur.executemany(sql, params)
-        self._conn.commit()
+        return table if not index else table.set_index(index)
 
     def execute_sql(self, sql, **kwargs):
-        try:
-            self._cur.execute(sql, kwargs)
-            self._conn.commit()
-        except Exception as e:
-            return 0
-        else:
-            return 1
+        self._cur.execute(sql, kwargs)
+        self._conn.commit()
 
     def close(self):
         self._cur.close()
