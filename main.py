@@ -2,7 +2,8 @@ import os
 import sys
 import time
 
-import records
+import pymysql
+import pandas as pd
 import numpy as np
 
 host = os.getenv("MYSQL_HOST")
@@ -14,9 +15,50 @@ table = os.getenv("TODO_TABLE")
 
 
 def get_db():
-    db_url = f"mysql://{user}:{pwd}@{host}:{port}/{db_name}"
-    db = records.Database(db_url)
+    db = pymysql.connect(host, user, pwd, db_name)
     return db
+
+
+class MyCursor:
+    def __init__(self, connection):
+        self._conn = connection
+        self._cur = self._conn.cursor()
+
+    def get_all(self, sql, **kwargs):
+        self._cur.execute(sql, kwargs)
+        data = self._cur.fetchall()
+        return data
+
+    def get_one(self, sql, **kwargs):
+        self._cur.execute(sql, kwargs)
+        data = self._cur.fetchone()
+        return data
+
+    def get_df(self, sql, index=None, **kwargs):
+        self._cur.execute(sql, kwargs)
+        cols = [i[0] for i in self._cur.description]
+        rows = self._cur.fetchall()
+        table = pd.DataFrame([[j for j in i] for i in rows], columns=cols)
+        if index is None:
+            return table
+        else:
+            return table.set_index(index)
+
+    def insert_data(self, sql, params=[]):
+        self._cur.executemany(sql, params)
+        self._conn.commit()
+
+    def execute_sql(self, sql, **kwargs):
+        try:
+            self._cur.execute(sql, kwargs)
+            self._conn.commit()
+        except Exception as e:
+            return 0
+        else:
+            return 1
+
+    def close(self):
+        self._cur.close()
 
 
 def get_status(x):
@@ -26,11 +68,10 @@ def get_status(x):
 
 def history(dbo, date):
     sql = f"""select content from {table} where status=0 and imp_date<'{date}' order by imp_time"""
-    rows = dbo.query(sql)
-    df = rows.export("df")
+    df = dbo.get_df(sql)
     sql = f"""select max(id) maid from {table} where imp_date='{date}'"""
-    rows = dbo.query(sql)
-    li = rows.all()[0]["maid"]
+    row = dbo.get_one(sql)
+    li = row[0] if row else None
     max_id = int(li) if li else -1
     df["rows"] = [i for i in range(1, len(df) + 1)]
     df["id"] = df[["rows"]].applymap(lambda x: x + max_id)
@@ -49,12 +90,11 @@ def history(dbo, date):
 def todo_list(*args):
     args = args[0]
     sql = f"""select count(*) cont from {table} where status=0 and imp_date<'{args["date"]}'"""
-    rows = args["dbo"].query(sql)
-    cont = rows.all()[0]["cont"]
+    row = args["dbo"].get_one(sql)
+    cont = row[0] if row else None
     _ = history(args["dbo"], args["date"]) if cont > 0 else None
     sql = f"""select id,content,status from {table} where imp_date='{args["date"]}' order by id"""
-    rows = args["dbo"].query(sql)
-    df = rows.export("df")
+    df = args["dbo"].get_df(sql)
     data = df.to_dict("records")
     content_list = df["content"].tolist() if not df.empty else []
     content_len = [len(i) for i in content_list]
@@ -78,37 +118,37 @@ def todo_list(*args):
 def done(*args):
     args = args[0]
     sql = f"""update {table} set status=1 where id='{args["the_id"]}' and imp_date='{args["date"]}'"""
-    args["dbo"].query(sql)
+    args["dbo"].execute_sql(sql)
     todo_list(args)
 
 
 def undo(*args):
     args = args[0]
     sql = f"""update {table} set status=0 where id='{args["the_id"]}' and imp_date='{args["date"]}'"""
-    args["dbo"].query(sql)
+    args["dbo"].execute_sql(sql)
     todo_list(args)
 
 
 def add(*args):
     args = args[0]
     sql = f"""select max(id) maid from {table} where imp_date='{args["date"]}'"""
-    rows = args["dbo"].query(sql)
-    get_id = rows.all()[0]["maid"]
+    row = args["dbo"].get_one(sql)
+    get_id = row[0] if row else None
     maid = int(get_id) if get_id else -1
     sql = f"""insert into {table}(id,content,imp_date,imp_time) values('{"0" + str(maid + 1) if
     len(str(maid + 1)) < 2 else str(maid + 1)}','{args["content"]}','{args["date"]}',
     '{time.strftime("%Y-%m-%d %H:%M:%S")}')"""
-    args["dbo"].query(sql)
+    args["dbo"].execute_sql(sql)
     todo_list(args)
 
 
 def delete(*args):
     args = args[0]
     sql = f"""delete from {table} where id='{args["the_id"]}' and imp_date='{args["date"]}'"""
-    args["dbo"].query(sql)
+    args["dbo"].execute_sql(sql)
     sql = f"""update {table} set id=(case when id-1<10 then concat('0',id-1) else 'new' end) where 
     id>{int(args["the_id"])} and imp_date='{args["date"]}'"""
-    args["dbo"].query(sql)
+    args["dbo"].execute_sql(sql)
     todo_list(args)
 
 
@@ -116,14 +156,14 @@ def modify(*args):
     args = args[0]
     sql = f"""update {table} set content='{args["content"]}' where id='{args["the_id"]}' 
     and imp_date='{args["date"]}'"""
-    args["dbo"].query(sql)
+    args["dbo"].execute_sql(sql)
     todo_list(args)
 
 
 def clean(*args):
     args = args[0]
     sql = f"""delete from {table} where imp_date='{args["date"]}'"""
-    args["dbo"].query(sql)
+    args["dbo"].execute_sql(sql)
     todo_list(args)
 
 
@@ -165,8 +205,10 @@ if __name__ == '__main__':
     params = sys.argv[2:]
     operate = params[0] if len(params) > 0 else "todo"
     dbo = get_db()
+    cur = MyCursor(dbo)
     date = time.strftime("%Y-%m-%d")
     the_id = params[1] if operate not in ("-add", "-h") and len(params) >= 2 else ""
     content = params[1] if operate == "-add" and len(params) >= 2 else params[2] if operate == "-modify" else ""
-    main_function(operate, dbo=dbo, date=date, the_id=the_id, content=content)
+    main_function(operate, dbo=cur, date=date, the_id=the_id, content=content)
+    cur.close()
     dbo.close()
