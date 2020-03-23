@@ -183,7 +183,7 @@ def get_help(args):
     print("\t-undo\t: You can use this param to chanag the status from finished to unfinish."
           "\n\t\t  for a example: todo -undo <the id of the mission which you want to \n\t\t  "
           "change the status back to unfinish>")
-    print("\t-h\t: You can use this param to get help info\n\t\t  for a example: todo -h")
+    print("\t-h\t: You can use this param to get help info\n\t\t  for a example: todo -h\n\n",end="")
 
 
 def main_function(key, **kwargs):
