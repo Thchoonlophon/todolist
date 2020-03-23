@@ -66,9 +66,15 @@ def history(dbo, date):
     df["imp_date"] = [date for _ in range(len(df))]
     df["imp_time"] = [time.strftime("%Y-%m-%d %H:%M:%S") for _ in range(len(df))]
     df.drop("rows", axis=1, inplace=True)
-    data = np.array(df).tolist()
-    sql = f"""insert into {table}(content,id,imp_date,imp_time) values(:1,:2,:3,:4)"""
-    dbo.execute_sql(sql, params=data)
+    data = list(np.array(df).tolist())
+    if len(data) > 1:
+        sql = f"""insert into {table}(content,id,imp_date,imp_time) values(:1,:2,:3,:4)"""
+    elif len(data) == 1:
+        sql = f"""insert into {table}(content,id,imp_date,imp_time) values('{data[0][0]}',
+        '{data[0][1]}','{data[0][2]}','{data[0][3]}')"""
+    else:
+        return 0
+    dbo.execute_sql(sql, params=data if len(data)>1 else None)
     sql = f"""delete from {table} where status=0 and imp_date<'{date}'"""
     dbo.execute_sql(sql)
 
