@@ -15,11 +15,12 @@ pwd = os.getenv("MYSQL_PWD")
 table = os.getenv("TODO_TABLE") if host else "todo_list"
 path = os.path.abspath(__file__)
 db_url = (("/".join(path.split("/")[:-1]) + "/") if "/" in path else (
-        "\\".join(path.split("\\")[:-1]) + "\\")) + "script_db.sqlite"
+    "\\".join(path.split("\\")[:-1]) + "\\")) + "script_db.sqlite"
 
 
 def get_db():
-    db = pymysql.connect(host, user, pwd, db_name) if host else sqlite3.connect(db_url)
+    db = pymysql.connect(
+        host, user, pwd, db_name) if host else sqlite3.connect(db_url)
     return db
 
 
@@ -41,7 +42,8 @@ class MyCursor:
         return table if not index else table.set_index(index)
 
     def execute_sql(self, sql, params=None, **kwargs):
-        self._cur.execute(sql, kwargs) if not params else self._cur.executemany(sql, params)
+        self._cur.execute(
+            sql, kwargs) if not params else self._cur.executemany(sql, params)
         self._conn.commit()
 
     def close(self):
@@ -62,9 +64,11 @@ def history(dbo, date):
     max_id = int(li) if li else -1
     df["rows"] = [i for i in range(1, len(df) + 1)]
     df["id"] = df[["rows"]].applymap(lambda x: x + max_id)
-    df["id"] = df[["id"]].applymap(lambda x: "0" + str(x) if len(str(x)) == 1 else x)
+    df["id"] = df[["id"]].applymap(
+        lambda x: "0" + str(x) if len(str(x)) == 1 else x)
     df["imp_date"] = [date for _ in range(len(df))]
-    df["imp_time"] = [time.strftime("%Y-%m-%d %H:%M:%S") for _ in range(len(df))]
+    df["imp_time"] = [time.strftime("%Y-%m-%d %H:%M:%S")
+                      for _ in range(len(df))]
     df.drop("rows", axis=1, inplace=True)
     data = list(np.array(df).tolist())
     if len(data) > 1:
@@ -74,7 +78,7 @@ def history(dbo, date):
         '{data[0][1]}','{data[0][2]}','{data[0][3]}')"""
     else:
         return 0
-    dbo.execute_sql(sql, params=data if len(data)>1 else None)
+    dbo.execute_sql(sql, params=data if len(data) > 1 else None)
     sql = f"""delete from {table} where status=0 and imp_date<'{date}'"""
     dbo.execute_sql(sql)
 
@@ -93,7 +97,7 @@ def todo_list(*args):
     max_len = max(content_len) if len(content_len) > 0 else 8
     head = """\t    ────────────────────""" + "─" * max_len + "\n" + \
            """\t     status   id    """ + " " * ((max_len - 5) // 2) + "event" + " " * (
-                   max_len - ((max_len - 5) // 2 + 5)) + "\n" + \
+               max_len - ((max_len - 5) // 2 + 5)) + "\n" + \
            """\t    ────────────────────""" + "─" * max_len + "\n"""
     content = [
         f"""\t        {get_status(i["status"])}     {i["id"]}    """ + " " * ((max_len - len(i["content"])) // 2) + i[
@@ -163,7 +167,8 @@ def clean(*args):
 
 def get_help(args):
     print("\n\n")
-    print("    todo [-h] | [-add | -clean | -delete | -done | -modify | -undo] <the id | content>")
+    print(
+        "    todo [-h] | [-add | -clean | -delete | -done | -modify | -undo] <the id | content>")
     print('\t-add\t: You can use this param to write a new mission.\n\t\t  for a example: '
           'todo -add "the example"')
     print("\t-clean\t: you can use this param to clear the today's list.\n\t\t  for a example: "
@@ -201,8 +206,10 @@ if __name__ == '__main__':
     dbo = get_db()
     cur = MyCursor(dbo)
     date = time.strftime("%Y-%m-%d")
-    the_id = params[1] if operate not in ("-add", "-h") and len(params) >= 2 else ""
-    content = params[1] if operate == "-add" and len(params) >= 2 else params[2] if operate == "-modify" else ""
+    the_id = params[1] if operate not in (
+        "-add", "-h") and len(params) >= 2 else ""
+    content = params[1] if operate == "-add" and len(
+        params) >= 2 else params[2] if operate == "-modify" else ""
     main_function(operate, dbo=cur, date=date, the_id=the_id, content=content)
     cur.close()
     dbo.close()
